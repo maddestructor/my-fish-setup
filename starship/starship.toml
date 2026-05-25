@@ -1,5 +1,5 @@
 format = """
-[ $directory ](bg:#3b4261 fg:#c0caf5 bold)$git_branch$git_status$nodejs$python$rust$golang$fill$cmd_duration[ $time ](bg:#3b4261 fg:#c0caf5)\n$character"""
+[ $directory ](bg:#3b4261 fg:#c0caf5 bold)$git_branch$git_status$nodejs$python$rust$golang$fill$cmd_duration[](fg:#3b4261)[ $time ](bg:#3b4261 fg:#c0caf5)\n$character"""
 
 add_newline = false
 
@@ -11,12 +11,12 @@ style = "dimmed white"
 truncation_length = 3
 truncate_to_repo = true
 style = "bg:#3b4261 fg:#c0caf5 bold"
-format = "[ $path ]($style)"
+format = "[ $path ]($style)[](fg:#3b4261)"
 
 [git_branch]
 symbol = " "
 style = "bg:#394b70 fg:#89ddff"
-format = "[](fg:#3b4261 bg:#394b70)[ $symbol$branch ]($style)"
+format = "[ $symbol$branch ]($style)"
 
 [git_status]
 style = "bg:#394b70 fg:#f7768e"
