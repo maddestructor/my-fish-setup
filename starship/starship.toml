@@ -1,14 +1,19 @@
 format = """
-$directory\
-$git_branch\
-$git_status\
-$nodejs\
-$python\
-$rust\
-$golang\
-$cmd_duration\
-$line_break\
+$fill$time
+$directory$git_branch$git_status$nodejs$python$rust$golang$cmd_duration
 $character"""
+
+add_newline = false
+
+[fill]
+symbol = "─"
+style = "dimmed white"
+
+[time]
+disabled = false
+format = "[$time]($style)"
+time_format = "%H:%M:%S"
+style = "dimmed white"
 
 [directory]
 truncation_length = 3
@@ -34,8 +39,9 @@ success_symbol = "[❯](bold green)"
 error_symbol = "[❯](bold red)"
 
 [cmd_duration]
-min_time = 2_000
-format = "took [$duration](bold yellow) "
+min_time = 500
+format = "[ took $duration]($style)"
+style = "bold yellow"
 
 [nodejs]
 symbol = " "
