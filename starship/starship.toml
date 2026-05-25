@@ -16,7 +16,7 @@ format = "[ $path ]($style)"
 [git_branch]
 symbol = " "
 style = "bg:#7aa2f7 fg:#1a1b26 bold"
-format = "[](fg:#3d59a1 bg:#7aa2f7)[ $symbol$branch ]($style)"
+format = "[](fg:#3d59a1 bg:#7aa2f7)[ $branch ]($style)"
 
 [git_status]
 style = "bg:#7aa2f7 fg:#ff9e64"
