@@ -1,6 +1,6 @@
 # my-fish-setup
 
-Fish shell dotfiles for a modern terminal stack. One-command install on Linux and macOS.
+A modern terminal stack for people who've had enough of slow prompts, unintuitive navigation, and tools that print walls of text. One command to rule them all.
 
 ---
 
@@ -18,58 +18,82 @@ git clone git@github.com:maddestructor/my-fish-setup.git ~/.my-fish-setup
 bash ~/.my-fish-setup/install-macos.sh
 ```
 
+The script will:
+- Install all tools
+- Copy fish configs and aliases
+- Set fish as your default shell
+- Configure git (name, email, editor, default branch)
+- Set up SSH — generates a new `ed25519` key if none exists
+- Back up any existing fish config before overwriting
+
 ---
 
 ## What's included
 
 | Tool | Purpose |
 |------|---------|
-| [fish](https://fishshell.com) | Shell |
-| [starship](https://starship.rs) | Prompt |
-| [zoxide](https://github.com/ajeetdsouza/zoxide) | Smarter `cd` |
-| [fzf](https://github.com/junegunn/fzf) | Fuzzy finder |
-| [fd](https://github.com/sharkdp/fd) | Fast `find` replacement |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | Fast `grep` replacement |
-| [eza](https://github.com/eza-community/eza) | Modern `ls` |
-| [bat](https://github.com/sharkdp/bat) | `cat` with syntax highlighting |
-| [neovim](https://neovim.io) | Editor |
+| [fish](https://fishshell.com) | Your new shell. Autocomplete that actually works out of the box |
+| [starship](https://starship.rs) | Fast, minimal prompt with git status and language info |
+| [zoxide](https://github.com/ajeetdsouza/zoxide) | Smarter `cd` — learns where you go and jumps there instantly |
+| [fzf](https://github.com/junegunn/fzf) | Fuzzy finder wired into history, file search, and directory jumping |
+| [fd](https://github.com/sharkdp/fd) | `find` but fast, sane, and respects `.gitignore` |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | `grep` on steroids — searches your whole codebase in milliseconds |
+| [eza](https://github.com/eza-community/eza) | `ls` with icons, colors, git status, and a tree view |
+| [bat](https://github.com/sharkdp/bat) | `cat` with syntax highlighting and line numbers |
+| [neovim](https://neovim.io) | The editor. Aliased to `v` and `vi` |
+| [git](https://git-scm.com) | Pre-configured with sane defaults (main branch, nvim editor) |
+| [openssh](https://www.openssh.com) | SSH client — key generated on install if you don't have one |
 
 ---
 
 ## Keyboard shortcuts
 
+These work anywhere in fish, powered by fzf:
+
 | Shortcut | Action |
 |----------|--------|
-| `Ctrl+R` | Fuzzy command history search |
-| `Ctrl+T` | Fuzzy file picker (inserts path) |
-| `Alt+C` | Fuzzy `cd` picker |
-| `Tab` | fzf completion on any command |
+| `Ctrl+R` | Fuzzy search through command history |
+| `Ctrl+T` | Fuzzy file picker — inserts selected path into the current command |
+| `Alt+C` | Fuzzy directory picker — `cd`s into the selected directory |
+| `Tab` | fzf-powered tab completion on any command |
 
-### Zoxide
+---
 
-```
-z <dir>       # Jump to frecent directory matching <dir>
-zi            # Interactive directory picker (fzf)
-z -           # Jump to previous directory
-```
+## Tools
 
-### ripgrep
+### zoxide — frecent directory jumping
 
-```
-rg <pattern>              # Search current directory recursively
-rg <pattern> <path>       # Search in specific path
-rg -t py <pattern>        # Search only Python files
-rg -l <pattern>           # List matching files only
-search <pattern>          # Alias for rg
+zoxide tracks which directories you visit and lets you jump to them by name, no matter where you are.
+
+```bash
+z projects          # jump to ~/dev/projects (or wherever "projects" matches)
+z fish              # jump to ~/.config/fish
+z doc               # jump to ~/Documents — zoxide picks the most visited match
+zi                  # open interactive picker with fzf — browse all known dirs
+z -                 # jump back to the previous directory
 ```
 
-### fd
+The more you use it, the smarter it gets. After a week, you'll never type a full path again.
 
+### ripgrep — blazing fast search
+
+```bash
+rg "TODO"                    # search for TODO in every file, recursively
+rg "useState" src/           # search only in src/
+rg -t ts "interface User"    # search only TypeScript files
+rg -l "console.log"          # list files containing the pattern (no line output)
+rg -i "error"                # case-insensitive search
+search "myFunction"          # alias for rg
 ```
-fd <pattern>              # Find files by name pattern
-ff <pattern>              # Alias: fd --type f <pattern>
-fd -e py                  # Find by extension
-fd -H <pattern>           # Include hidden files
+
+### fd — fast, friendly find
+
+```bash
+fd config                    # find all files/dirs named "config"
+ff config                    # alias: find only files named "config"
+fd -e toml                   # find all .toml files
+fd -H .env                   # include hidden files in search
+fd -E node_modules "*.ts"    # exclude node_modules
 ```
 
 ---
@@ -77,62 +101,103 @@ fd -H <pattern>           # Include hidden files
 ## Aliases
 
 ### Navigation
-| Alias | Command |
-|-------|---------|
-| `..` | `cd ..` |
-| `...` | `cd ../..` |
-| `....` | `cd ../../..` |
-| `reload` | `exec fish` |
-| `mkdir` | `mkdir -p` |
+
+| Alias | Does what |
+|-------|-----------|
+| `..` | Go up one directory |
+| `...` | Go up two directories |
+| `....` | Go up three directories |
+| `mkdir` | Always creates parent dirs (`mkdir -p`) — no more "cannot create directory" errors |
+| `reload` | Restart fish shell cleanly (`exec fish`) |
 
 ### Listing (eza)
-| Alias | Command |
-|-------|---------|
-| `ls` | `eza --icons=always` |
-| `l` | `eza -l --icons=always` |
-| `ll` | `eza -la --icons=always --git` |
-| `la` | `eza -a --icons=always` |
-| `lt` | `eza --tree --icons=always` |
+
+| Alias | Does what |
+|-------|-----------|
+| `ls` | List with icons |
+| `l` | Long format with icons |
+| `ll` | Long format, hidden files, git status column |
+| `la` | Show hidden files |
+| `lt` | Tree view of current directory |
+
+```bash
+ll          # see permissions, sizes, git status, and modification dates at a glance
+lt          # see folder structure without opening every directory
+```
 
 ### Editors
-| Alias | Command |
-|-------|---------|
-| `v` | `nvim` |
-| `vi` | `nvim` |
-| `cat` | `bat` |
+
+| Alias | Does what |
+|-------|-----------|
+| `v` | Open neovim |
+| `vi` | Open neovim |
+| `cat` | bat — syntax highlighted file viewer with line numbers |
+
+```bash
+cat config.fish      # syntax highlighted, paged, line numbers
+v .                  # open current directory in neovim
+```
 
 ### Git
-| Alias | Command |
-|-------|---------|
+
+| Alias | Does what |
+|-------|-----------|
 | `g` | `git` |
-| `gs` | `git status` |
+| `gs` | `git status` — see what changed |
 | `ga` | `git add` |
 | `gc` | `git commit` |
 | `gp` | `git push` |
 | `gpl` | `git pull` |
 | `gco` | `git checkout` |
-| `gb` | `git branch` |
-| `glog` | `git log --oneline --graph --decorate` |
-| `gd` | `git diff` |
+| `gb` | `git branch` — list branches |
+| `glog` | Pretty graph log — one line per commit with branch visualization |
+| `gd` | `git diff` — see unstaged changes |
+
+```bash
+gs && ga . && gc -m "fix: typo"    # the usual flow
+glog                               # see a visual history of your branches
+gd HEAD~1                          # diff against the previous commit
+```
 
 ### Search
-| Alias | Command |
-|-------|---------|
-| `search` | `rg` |
-| `ff` | `fd --type f` |
+
+| Alias | Does what |
+|-------|-----------|
+| `search` | `rg` — ripgrep |
+| `ff` | `fd --type f` — find files only (no directories) |
 
 ---
 
-## Manual steps after install
+## After install
 
-1. **GitHub SSH key** — copy your public key and add it at https://github.com/settings/keys:
-   ```bash
-   cat ~/.ssh/id_ed25519.pub
-   ```
+### SSH key → GitHub
 
-2. **GitHub CLI auth:**
-   ```bash
-   gh auth login
-   ```
+The installer generates `~/.ssh/id_ed25519` if no key exists. Copy your public key and add it at **https://github.com/settings/keys**:
 
-3. **Restart your terminal** to load fish as default shell.
+```bash
+cat ~/.ssh/id_ed25519.pub
+```
+
+### GitHub CLI auth
+
+```bash
+gh auth login
+```
+
+### Restart your terminal
+
+Your default shell is now fish. Open a new terminal window to get the full experience.
+
+---
+
+## Git config
+
+Installed at `~/.gitconfig`:
+
+```
+name:           maddestructor
+email:          mathieubelanger14@gmail.com
+default branch: main
+editor:         nvim
+pull strategy:  merge (not rebase)
+```
