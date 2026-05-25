@@ -10,17 +10,16 @@ style = "dimmed white"
 [directory]
 truncation_length = 3
 truncate_to_repo = true
-style = "bg:#3d59a1 fg:#c0caf5 bold"
+style = "bg:#0db9d7 fg:#1a1b26 bold"
 format = "[ $path ]($style)"
 
 [git_branch]
-symbol = " "
-style = "bg:#7aa2f7 fg:#1a1b26 bold"
-format = "[](fg:#3d59a1 bg:#7aa2f7)[ $branch ]($style)"
+style = "bg:#9ece6a fg:#1a1b26 bold"
+format = "[](fg:#0db9d7 bg:#9ece6a)[ $branch ]($style)"
 
 [git_status]
-style = "bg:#7aa2f7 fg:#ff9e64"
-format = "[$all_status$ahead_behind]($style)[](fg:#7aa2f7)"
+style = "bg:#9ece6a fg:#1a1b26"
+format = "[$all_status$ahead_behind]($style)[](fg:#9ece6a)"
 ahead = "⇡${count}"
 behind = "⇣${count}"
 diverged = "⇕⇡${ahead_count}⇣${behind_count}"
