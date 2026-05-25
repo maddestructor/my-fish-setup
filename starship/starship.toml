@@ -1,5 +1,5 @@
 format = """
-$directory$custom.dir_end$git_branch$git_status$nodejs$python$rust$golang$fill$cmd_duration[](fg:#3d59a1)[ $time ](bg:#3d59a1 fg:#c0caf5)\n$character"""
+$directory$git_branch$git_status$nodejs$python$rust$golang$fill$cmd_duration[](fg:#3d59a1)[ $time ](bg:#3d59a1 fg:#c0caf5)\n$character"""
 
 add_newline = false
 
@@ -11,20 +11,12 @@ style = "dimmed white"
 truncation_length = 3
 truncate_to_repo = true
 style = "bg:#3d59a1 fg:#c0caf5 bold"
-format = "[ $path ]($style)"
-
-# Closing arrow for dir — only shows when NOT in a git repo
-# When in git, git_branch handles the transition arrow instead
-[custom.dir_end]
-command = "echo -n"
-when = "! git rev-parse --is-inside-work-tree 2>/dev/null"
-shell = ["bash", "-c"]
-format = "[](fg:#3d59a1)"
+format = "[ $path ]($style)[](fg:#3d59a1)"
 
 [git_branch]
 symbol = " "
-style = "bg:#7aa2f7 fg:#1a1b26"
-format = "[](fg:#3d59a1 bg:#7aa2f7)[ $symbol$branch ]($style)"
+style = "bg:#7aa2f7 fg:#1a1b26 bold"
+format = "[ $symbol$branch ]($style)"
 
 [git_status]
 style = "bg:#7aa2f7 fg:#ff9e64"
