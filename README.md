@@ -192,11 +192,9 @@ Your default shell is now fish. Open a new terminal window to get the full exper
 
 ## Git config
 
-Installed at `~/.gitconfig`:
+The installer prompts for your name and email. Everything else is set automatically:
 
 ```
-name:           maddestructor
-email:          mathieubelanger14@gmail.com
 default branch: main
 editor:         nvim
 pull strategy:  merge (not rebase)

@@ -66,11 +66,23 @@ configure_git() {
     step "Configuring git"
     if [ -f "$HOME/.gitconfig" ]; then
         warn "~/.gitconfig already exists"
-        read -rp "  Overwrite with dotfiles template? [y/N] " ans
+        read -rp "  Reconfigure? [y/N] " ans
         [[ "${ans,,}" == "y" ]] || { info "Skipping git config"; return; }
     fi
-    cp "$REPO_DIR/git/.gitconfig.template" "$HOME/.gitconfig"
-    info "Git config installed"
+
+    read -rp "  Git name [maddestructor]: " git_name
+    git_name="${git_name:-maddestructor}"
+
+    read -rp "  Git email [mathieubelanger14@gmail.com]: " git_email
+    git_email="${git_email:-mathieubelanger14@gmail.com}"
+
+    git config --global user.name "$git_name"
+    git config --global user.email "$git_email"
+    git config --global init.defaultBranch main
+    git config --global pull.rebase false
+    git config --global core.editor nvim
+
+    info "Git configured (name: $git_name, email: $git_email)"
 }
 
 # ── SSH ───────────────────────────────────────────────────────────────────────
