@@ -1,0 +1,9 @@
+[user]
+	name = maddestructor
+	email = mathieubelanger14@gmail.com
+[init]
+	defaultBranch = main
+[pull]
+	rebase = false
+[core]
+	editor = nvim
