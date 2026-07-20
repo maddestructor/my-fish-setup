@@ -25,17 +25,55 @@ detect_os() {
 
 # ── Package installation ─────────────────────────────────────────────────────
 install_curl_tool() {
-    local name="$1" url="$2"
+    local name="$1" url="$2"; shift 2
     info "Installing $name via curl..."
-    curl -fsSL "$url" | bash
+    # Pipe to `sh`, not `bash` — starship's installer warns non-POSIX bash may error.
+    # Extra args ("$@") are forwarded to the installer (e.g. --yes for starship).
+    curl -fsSL "$url" | sh -s -- "$@"
 }
 
-install_eza_deb() {
-    local version
-    version=$(curl -fsSL https://api.github.com/repos/eza-community/eza/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
-    local deb_url="https://github.com/eza-community/eza/releases/latest/download/eza_${version}_amd64.deb"
-    local tmp="/tmp/eza.deb"
-    curl -fsSL "$deb_url" -o "$tmp" && sudo dpkg -i "$tmp" && rm "$tmp"
+# eza: no correctly-named .deb on GitHub releases (old URL 404s).
+# Use the official gierens apt repo instead.
+install_eza_apt() {
+    sudo mkdir -p /etc/apt/keyrings
+    curl -fsSL https://raw.githubusercontent.com/eza-community/eza/main/deb.asc \
+        | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" \
+        | sudo tee /etc/apt/sources.list.d/gierens.list > /dev/null
+    sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
+    sudo apt-get update -qq
+    sudo apt-get install -y eza
+}
+
+# gh: not in default Ubuntu repos — add official GitHub CLI apt repo.
+install_gh_apt() {
+    sudo mkdir -p -m 755 /etc/apt/keyrings
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+        | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
+    sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    sudo apt-get update -qq
+    sudo apt-get install -y gh
+}
+
+# Nerd Font — required for starship powerline glyphs () + dev icons to render.
+# Without it the prompt looks like broken boxes.
+install_nerd_font() {
+    if fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd Font"; then
+        info "JetBrainsMono Nerd Font already installed"
+        return
+    fi
+    local font_dir="$HOME/.local/share/fonts"
+    local tmp="/tmp/JetBrainsMono.zip"
+    mkdir -p "$font_dir"
+    if curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip" -o "$tmp"; then
+        unzip -oq "$tmp" -d "$font_dir" && rm -f "$tmp"
+        fc-cache -f "$font_dir" > /dev/null 2>&1 || true
+        info "JetBrainsMono Nerd Font installed → set it as your terminal font"
+    else
+        warn "Nerd Font download failed — install a Nerd Font manually for correct prompt glyphs"
+    fi
 }
 
 install_packages() {
@@ -52,10 +90,15 @@ install_packages() {
             sudo apt-get update -qq
             sudo apt-get install -y \
                 fish neovim git openssh-client ripgrep fzf \
-                fd-find bat curl build-essential
+                fd-find bat curl build-essential \
+                unzip fontconfig gpg wget
+
+            # Ensure ~/.local/bin exists AND is on PATH for the rest of this run,
+            # so the command -v checks below (and curl-installed tools) resolve.
+            mkdir -p "$LOCAL_BIN"
+            export PATH="$LOCAL_BIN:$PATH"
 
             # fd: Ubuntu names it fd-find
-            mkdir -p "$LOCAL_BIN"
             if ! command -v fd &>/dev/null; then
                 ln -sf "$(which fdfind)" "$LOCAL_BIN/fd"
                 info "Created fd → fdfind symlink"
@@ -67,9 +110,9 @@ install_packages() {
                 info "Created bat → batcat symlink"
             fi
 
-            # starship
+            # starship (pass --yes so the installer doesn't prompt when piped)
             if ! command -v starship &>/dev/null; then
-                install_curl_tool "starship" "https://starship.rs/install.sh"
+                install_curl_tool "starship" "https://starship.rs/install.sh" --yes
             fi
 
             # zoxide
@@ -77,10 +120,18 @@ install_packages() {
                 install_curl_tool "zoxide" "https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh"
             fi
 
-            # eza
+            # eza (official gierens apt repo — the old .deb URL 404s)
             if ! command -v eza &>/dev/null; then
-                install_eza_deb || warn "eza install failed — try: cargo install eza"
+                install_eza_apt || warn "eza install failed — try: cargo install eza"
             fi
+
+            # gh (GitHub CLI — not in default repos)
+            if ! command -v gh &>/dev/null; then
+                install_gh_apt || warn "gh install failed — see https://github.com/cli/cli#installation"
+            fi
+
+            # Nerd Font (fixes broken prompt glyphs)
+            install_nerd_font
             ;;
 
         fedora)
@@ -241,9 +292,13 @@ main() {
     set_default_shell
 
     echo ""
-    info "Done! Start a new terminal session to use fish."
+    info "Done!"
+    echo ""
+    echo "  Reload now (no need to open a new terminal):"
+    echo -e "    ${GREEN}exec fish${NC}      # switch into fish + load starship this session"
     echo ""
     echo "  Next steps:"
+    echo "  • Set your terminal font to 'JetBrainsMono Nerd Font' (fixes prompt glyphs)"
     echo "  • Run 'gh auth login' to authenticate GitHub CLI"
     echo "  • Add ~/.ssh/id_ed25519.pub to GitHub if using SSH"
     echo ""

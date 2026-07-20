@@ -18,7 +18,10 @@ if status is-interactive
     alias l='eza -l --icons=always'
 
     # --- bat (better cat) ---
-    alias cat='bat'
+    # `cat` = pretty view (line numbers + grid).
+    # `catp` = plain (no numbers/grid/paging) so copy-pasted output stays clean.
+    alias cat='bat --paging=never'
+    alias catp='bat --style=plain --paging=never'
 
     # --- editors ---
     alias v='nvim'
