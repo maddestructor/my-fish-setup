@@ -14,12 +14,17 @@ error()   { echo -e "${RED}[✗]${NC} $*"; exit 1; }
 step()    { echo -e "\n${GREEN}▶${NC} $*"; }
 
 # ── OS detection ────────────────────────────────────────────────────────────
+# Sets globals OS_ID and OS_ID_LIKE. Must run in the current shell (not a
+# subshell/command substitution) so both values survive past this call —
+# ID_LIKE is what lets subdistros (e.g. cachyos, nobara) fall back to their
+# upstream family's package install logic below.
 detect_os() {
+    OS_ID="unknown"
+    OS_ID_LIKE=""
     if [ -f /etc/os-release ]; then
         . /etc/os-release
-        echo "${ID:-unknown}"
-    else
-        echo "unknown"
+        OS_ID="${ID:-unknown}"
+        OS_ID_LIKE="${ID_LIKE:-}"
     fi
 }
 
@@ -76,96 +81,150 @@ install_nerd_font() {
     fi
 }
 
+install_arch_packages() {
+    sudo pacman -S --needed --noconfirm \
+        fish starship zoxide fzf fd ripgrep eza bat neovim git openssh
+}
+
+install_fedora_packages() {
+    sudo dnf install -y \
+        fish neovim git openssh ripgrep fzf fd-find bat curl
+
+    if ! command -v starship &>/dev/null; then
+        install_curl_tool "starship" "https://starship.rs/install.sh"
+    fi
+    if ! command -v zoxide &>/dev/null; then
+        install_curl_tool "zoxide" "https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh"
+    fi
+    if ! command -v eza &>/dev/null; then
+        warn "eza not in fedora repos — install via: cargo install eza"
+    fi
+}
+
+install_rhel_packages() {
+    sudo dnf install -y epel-release
+    sudo dnf install -y \
+        fish neovim git openssh ripgrep fzf bat curl
+
+    if ! command -v starship &>/dev/null; then
+        install_curl_tool "starship" "https://starship.rs/install.sh"
+    fi
+    if ! command -v zoxide &>/dev/null; then
+        install_curl_tool "zoxide" "https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh"
+    fi
+    warn "fd + eza may not be in repos — install via: cargo install fd-find eza"
+}
+
+install_debian_packages() {
+    sudo apt-get update -qq
+    sudo apt-get install -y \
+        fish neovim git openssh-client ripgrep fzf \
+        fd-find bat curl build-essential \
+        unzip fontconfig gpg wget
+
+    # Ensure ~/.local/bin exists AND is on PATH for the rest of this run,
+    # so the command -v checks below (and curl-installed tools) resolve.
+    mkdir -p "$LOCAL_BIN"
+    export PATH="$LOCAL_BIN:$PATH"
+
+    # fd: Debian/Ubuntu name it fd-find
+    if ! command -v fd &>/dev/null; then
+        ln -sf "$(which fdfind)" "$LOCAL_BIN/fd"
+        info "Created fd → fdfind symlink"
+    fi
+
+    # bat: Debian/Ubuntu name it batcat
+    if ! command -v bat &>/dev/null; then
+        ln -sf "$(which batcat)" "$LOCAL_BIN/bat"
+        info "Created bat → batcat symlink"
+    fi
+
+    # starship (pass --yes so the installer doesn't prompt when piped)
+    if ! command -v starship &>/dev/null; then
+        install_curl_tool "starship" "https://starship.rs/install.sh" --yes
+    fi
+
+    # zoxide
+    if ! command -v zoxide &>/dev/null; then
+        install_curl_tool "zoxide" "https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh"
+    fi
+
+    # eza (official gierens apt repo — the old .deb URL 404s)
+    if ! command -v eza &>/dev/null; then
+        install_eza_apt || warn "eza install failed — try: cargo install eza"
+    fi
+
+    # gh (GitHub CLI — not in default repos)
+    if ! command -v gh &>/dev/null; then
+        install_gh_apt || warn "gh install failed — see https://github.com/cli/cli#installation"
+    fi
+
+    # Nerd Font (fixes broken prompt glyphs)
+    install_nerd_font
+}
+
 install_packages() {
-    local os="$1"
+    local os="$1" os_like="$2"
     step "Installing packages for: $os"
 
     case "$os" in
-        arch|manjaro|endeavouros)
-            sudo pacman -S --needed --noconfirm \
-                fish starship zoxide fzf fd ripgrep eza bat neovim git openssh
+        # Arch and its popular derivatives/spins
+        arch|manjaro|endeavouros|cachyos|garuda|arcolinux|artix)
+            install_arch_packages
             ;;
 
-        ubuntu|debian|linuxmint|pop)
-            sudo apt-get update -qq
-            sudo apt-get install -y \
-                fish neovim git openssh-client ripgrep fzf \
-                fd-find bat curl build-essential \
-                unzip fontconfig gpg wget
-
-            # Ensure ~/.local/bin exists AND is on PATH for the rest of this run,
-            # so the command -v checks below (and curl-installed tools) resolve.
-            mkdir -p "$LOCAL_BIN"
-            export PATH="$LOCAL_BIN:$PATH"
-
-            # fd: Ubuntu names it fd-find
-            if ! command -v fd &>/dev/null; then
-                ln -sf "$(which fdfind)" "$LOCAL_BIN/fd"
-                info "Created fd → fdfind symlink"
-            fi
-
-            # bat: Ubuntu names it batcat
-            if ! command -v bat &>/dev/null; then
-                ln -sf "$(which batcat)" "$LOCAL_BIN/bat"
-                info "Created bat → batcat symlink"
-            fi
-
-            # starship (pass --yes so the installer doesn't prompt when piped)
-            if ! command -v starship &>/dev/null; then
-                install_curl_tool "starship" "https://starship.rs/install.sh" --yes
-            fi
-
-            # zoxide
-            if ! command -v zoxide &>/dev/null; then
-                install_curl_tool "zoxide" "https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh"
-            fi
-
-            # eza (official gierens apt repo — the old .deb URL 404s)
-            if ! command -v eza &>/dev/null; then
-                install_eza_apt || warn "eza install failed — try: cargo install eza"
-            fi
-
-            # gh (GitHub CLI — not in default repos)
-            if ! command -v gh &>/dev/null; then
-                install_gh_apt || warn "gh install failed — see https://github.com/cli/cli#installation"
-            fi
-
-            # Nerd Font (fixes broken prompt glyphs)
-            install_nerd_font
+        # Debian/Ubuntu and its popular derivatives/spins
+        ubuntu|debian|linuxmint|pop|elementary|zorin|neon|kali|kubuntu|xubuntu|lubuntu)
+            install_debian_packages
             ;;
 
-        fedora)
-            sudo dnf install -y \
-                fish neovim git openssh ripgrep fzf fd-find bat curl
-
-            if ! command -v starship &>/dev/null; then
-                install_curl_tool "starship" "https://starship.rs/install.sh"
-            fi
-            if ! command -v zoxide &>/dev/null; then
-                install_curl_tool "zoxide" "https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh"
-            fi
-            if ! command -v eza &>/dev/null; then
-                warn "eza not in fedora repos — install via: cargo install eza"
-            fi
+        # Fedora and its popular derivatives/spins
+        fedora|nobara)
+            install_fedora_packages
             ;;
 
         rhel|centos|almalinux|rocky)
-            sudo dnf install -y epel-release
-            sudo dnf install -y \
-                fish neovim git openssh ripgrep fzf bat curl
-
-            if ! command -v starship &>/dev/null; then
-                install_curl_tool "starship" "https://starship.rs/install.sh"
-            fi
-            if ! command -v zoxide &>/dev/null; then
-                install_curl_tool "zoxide" "https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh"
-            fi
-            warn "fd + eza may not be in repos — install via: cargo install fd-find eza"
+            install_rhel_packages
             ;;
 
         *)
-            warn "Unknown OS '$os' — skipping package install. Install manually:"
-            warn "  fish starship zoxide fzf fd ripgrep eza bat neovim git openssh"
+            # Fall back to the upstream family via ID_LIKE (from /etc/os-release)
+            # so subdistros we haven't explicitly listed above still work.
+            case "$os_like" in
+                *arch*)
+                    warn "Unrecognized OS '$os' but ID_LIKE='$os_like' looks Arch-based — using Arch packages"
+                    install_arch_packages
+                    ;;
+                *debian*|*ubuntu*)
+                    warn "Unrecognized OS '$os' but ID_LIKE='$os_like' looks Debian-based — using Debian/Ubuntu packages"
+                    install_debian_packages
+                    ;;
+                *fedora*)
+                    warn "Unrecognized OS '$os' but ID_LIKE='$os_like' looks Fedora-based — using Fedora packages"
+                    install_fedora_packages
+                    ;;
+                *rhel*)
+                    warn "Unrecognized OS '$os' but ID_LIKE='$os_like' looks RHEL-based — using RHEL packages"
+                    install_rhel_packages
+                    ;;
+                *)
+                    # Last resort: neither ID nor ID_LIKE told us the family —
+                    # just check which package manager binary is actually on PATH.
+                    if command -v pacman &>/dev/null; then
+                        warn "Unrecognized OS '$os' — found pacman, using Arch packages"
+                        install_arch_packages
+                    elif command -v apt-get &>/dev/null; then
+                        warn "Unrecognized OS '$os' — found apt-get, using Debian/Ubuntu packages"
+                        install_debian_packages
+                    elif command -v dnf &>/dev/null; then
+                        warn "Unrecognized OS '$os' — found dnf, using Fedora packages"
+                        install_fedora_packages
+                    else
+                        warn "Unknown OS '$os' — skipping package install. Install manually:"
+                        warn "  fish starship zoxide fzf fd ripgrep eza bat neovim git openssh"
+                    fi
+                    ;;
+            esac
             ;;
     esac
 }
@@ -281,10 +340,9 @@ main() {
     echo "╚══════════════════════════════════════╝"
     echo ""
 
-    local os
-    os=$(detect_os)
+    detect_os
 
-    install_packages "$os"
+    install_packages "$OS_ID" "$OS_ID_LIKE"
     install_fish_configs
     install_starship_config
     configure_git
