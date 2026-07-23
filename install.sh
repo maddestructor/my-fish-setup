@@ -83,7 +83,7 @@ install_nerd_font() {
 
 install_arch_packages() {
     sudo pacman -S --needed --noconfirm \
-        fish starship zoxide fzf fd ripgrep eza bat neovim git openssh
+        fish starship zoxide fzf fd ripgrep eza bat neovim git openssh github-cli
 }
 
 install_fedora_packages() {
