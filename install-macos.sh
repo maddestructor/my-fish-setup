@@ -67,7 +67,7 @@ configure_git() {
     if [ -f "$HOME/.gitconfig" ]; then
         warn "~/.gitconfig already exists"
         read -rp "  Reconfigure? [y/N] " ans
-        [[ "${ans,,}" == "y" ]] || { info "Skipping git config"; return; }
+        [[ "$ans" == [yY] ]] || { info "Skipping git config"; return; }
     fi
 
     read -rp "  Git name [maddestructor]: " git_name
