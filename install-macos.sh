@@ -45,6 +45,7 @@ install_fish_configs() {
     rm -f "$FISH_CONFIG/conf.d/fzf.fish"
 
     cp "$REPO_DIR/fish/config.fish" "$FISH_CONFIG/config.fish"
+    cp "$REPO_DIR/fish/conf.d/00-homebrew.fish" "$FISH_CONFIG/conf.d/00-homebrew.fish"
     cp "$REPO_DIR/fish/conf.d/ssh-agent.fish" "$FISH_CONFIG/conf.d/ssh-agent.fish"
     cp "$REPO_DIR/fish/conf.d/uv.fish" "$FISH_CONFIG/conf.d/uv.fish"
     info "Fish configs installed"
