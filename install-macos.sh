@@ -93,6 +93,19 @@ setup_ssh() {
     mkdir -p "$HOME/.ssh"
     chmod 700 "$HOME/.ssh"
 
+    # Homebrew's OpenSSH rejects Apple's UseKeychain option.
+    local ssh_config="$HOME/.ssh/config"
+    if [ -f "$ssh_config" ] \
+        && grep -qi '^[[:space:]]*UseKeychain' "$ssh_config" \
+        && ! grep -qi '^[[:space:]]*IgnoreUnknown.*UseKeychain' "$ssh_config"; then
+        local tmp
+        tmp="$(mktemp)"
+        { printf 'IgnoreUnknown UseKeychain\n\n'; cat "$ssh_config"; } > "$tmp"
+        cat "$tmp" > "$ssh_config"
+        rm -f "$tmp"
+        info "Added 'IgnoreUnknown UseKeychain' to ~/.ssh/config"
+    fi
+
     local has_key=false
     for key in id_ed25519 id_rsa; do
         if [ -f "$HOME/.ssh/$key" ]; then
