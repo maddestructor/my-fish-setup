@@ -5,6 +5,7 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOCAL_BIN="$HOME/.local/bin"
 FISH_CONFIG="$HOME/.config/fish"
 BACKUP_DIR="$HOME/.config/fish.bak.$(date +%Y%m%d%H%M%S)"
+ONEPASSWORD_SSH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info() { echo -e "${GREEN}[✓]${NC} $*"; }
@@ -45,6 +46,7 @@ install_fish_configs() {
     rm -f "$FISH_CONFIG/conf.d/fzf.fish"
 
     cp "$REPO_DIR/fish/config.fish" "$FISH_CONFIG/config.fish"
+    cp "$REPO_DIR/fish/conf.d/00-homebrew.fish" "$FISH_CONFIG/conf.d/00-homebrew.fish"
     cp "$REPO_DIR/fish/conf.d/ssh-agent.fish" "$FISH_CONFIG/conf.d/ssh-agent.fish"
     cp "$REPO_DIR/fish/conf.d/uv.fish" "$FISH_CONFIG/conf.d/uv.fish"
     info "Fish configs installed"
@@ -67,7 +69,7 @@ configure_git() {
     if [ -f "$HOME/.gitconfig" ]; then
         warn "~/.gitconfig already exists"
         read -rp "  Reconfigure? [y/N] " ans
-        [[ "${ans,,}" == "y" ]] || { info "Skipping git config"; return; }
+        [[ "$ans" == [yY] ]] || { info "Skipping git config"; return; }
     fi
 
     read -rp "  Git name [maddestructor]: " git_name
@@ -99,6 +101,11 @@ setup_ssh() {
             break
         fi
     done
+
+    if [ "$has_key" = false ] && [ -S "$ONEPASSWORD_SSH_SOCK" ]; then
+        info "1Password SSH agent found — skipping key generation"
+        has_key=true
+    fi
 
     if [ "$has_key" = false ]; then
         info "No SSH key found — generating ed25519 key"

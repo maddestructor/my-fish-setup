@@ -1,4 +1,9 @@
-if status is-interactive
+# Keys stored in 1Password are only served by its own agent, so a plain ssh-agent would hide them.
+set -l onepassword_sock "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+
+if test -S "$onepassword_sock"
+    set -gx SSH_AUTH_SOCK $onepassword_sock
+else if status is-interactive
     if not pgrep -u $USER ssh-agent > /dev/null
         eval (ssh-agent -c) > /dev/null
         set -Ux SSH_AUTH_SOCK $SSH_AUTH_SOCK
