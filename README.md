@@ -23,7 +23,7 @@ The script will:
 - Copy fish configs and aliases
 - Set fish as your default shell
 - Configure git (name, email, editor, default branch)
-- Set up SSH — generates a new `ed25519` key if none exists
+- Set up SSH — generates a new `ed25519` key if none exists (on macOS, skipped when the 1Password SSH agent is on)
 - Back up any existing fish config before overwriting
 
 ---
@@ -172,7 +172,7 @@ gd HEAD~1                          # diff against the previous commit
 
 ### SSH key → GitHub
 
-The installer generates `~/.ssh/id_ed25519` if no key exists. Copy your public key and add it at **https://github.com/settings/keys**:
+The installer generates `~/.ssh/id_ed25519` if no key exists. On macOS, it skips this step when the [1Password SSH agent](https://developer.1password.com/docs/ssh/agent/) is on, and fish uses that agent. Otherwise, copy your public key and add it at **https://github.com/settings/keys**:
 
 ```bash
 cat ~/.ssh/id_ed25519.pub

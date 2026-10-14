@@ -5,6 +5,7 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOCAL_BIN="$HOME/.local/bin"
 FISH_CONFIG="$HOME/.config/fish"
 BACKUP_DIR="$HOME/.config/fish.bak.$(date +%Y%m%d%H%M%S)"
+ONEPASSWORD_SSH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info() { echo -e "${GREEN}[✓]${NC} $*"; }
@@ -100,6 +101,11 @@ setup_ssh() {
             break
         fi
     done
+
+    if [ "$has_key" = false ] && [ -S "$ONEPASSWORD_SSH_SOCK" ]; then
+        info "1Password SSH agent found — skipping key generation"
+        has_key=true
+    fi
 
     if [ "$has_key" = false ]; then
         info "No SSH key found — generating ed25519 key"
