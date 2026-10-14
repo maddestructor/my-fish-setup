@@ -178,6 +178,8 @@ The installer generates `~/.ssh/id_ed25519` if no key exists. On macOS, it skips
 cat ~/.ssh/id_ed25519.pub
 ```
 
+On macOS, the installer puts Homebrew's OpenSSH first on the fish PATH. That `ssh` stops on Apple's `UseKeychain` option, so the installer adds `IgnoreUnknown UseKeychain` at the top of `~/.ssh/config` when the file uses that option.
+
 ### GitHub CLI auth
 
 ```bash
